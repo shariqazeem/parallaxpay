@@ -4,7 +4,7 @@
   "description": "ParallaxPay - Decentralized AI Inference Marketplace",
   "private": true,
   "scripts": {
-    "setup": "node scripts/setup.js",
+    "setup": "npm install && node scripts/setup.js",
     "install:all": "npm install && cd agents/provider && npm install && cd ../client && npm install && cd ../../parallaxpayx402 && npm install --legacy-peer-deps",
     "provider:dev": "cd agents/provider && npm run dev",
     "client:demo": "cd agents/client && npm run demo",
@@ -27,5 +27,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/your-org/parallaxpay"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.8",
+    "bs58": "^6.0.0"
   }
 }

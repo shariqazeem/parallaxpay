@@ -19,11 +19,8 @@ Get ParallaxPay running in **5 minutes**!
 git clone https://github.com/your-org/parallaxpay
 cd parallaxpay
 
-# 2. Install root dependencies
-npm install
-
-# 3. Run setup wizard
-node scripts/setup.js
+# 2. Run setup wizard (installs dependencies automatically)
+npm run setup
 # This will:
 #   - Generate Solana wallets
 #   - Create .env files
