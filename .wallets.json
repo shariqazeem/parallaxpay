@@ -1,0 +1,11 @@
+{
+  "provider": {
+    "publicKey": "9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y",
+    "privateKey": "4aFChrdZQtmwrjsHgYjs3oAzLGFQgYiyVH28ZPjvNNxC3qEExAo2iRsLG9ZLxAa46TDJx3jQYcLPT8vT1ZuLqVCj"
+  },
+  "client": {
+    "publicKey": "5upbbRsyuZiRZw4rwvMKJ8Cbdhy4tJNvQjcbHaD7m8xo",
+    "privateKey": "4D6mZkYFQgF24wqx8ueQpDnELHkgRcgsnuWgATjQvN8DYa6RoMzqHyymdLWbBC1jDsBPr8wJm6W6UxRH52DX2hdH"
+  },
+  "timestamp": "2025-11-04T20:15:08.805Z"
+}

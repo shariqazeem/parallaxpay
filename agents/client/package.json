@@ -7,7 +7,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "demo": "tsx src/demo.ts"
+    "demo": "tsx src/demo.ts",
+    "demo:simple": "tsx src/demo-simple.ts"
   },
   "dependencies": {
     "@solana/web3.js": "^1.95.8",

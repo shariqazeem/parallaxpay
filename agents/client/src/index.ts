@@ -73,13 +73,20 @@ export class ParallaxPayClientAgent {
     const autoSelect = process.env.AUTO_SELECT_CHEAPEST === 'true';
     const minRating = parseFloat(process.env.MIN_PROVIDER_RATING || '3.0');
 
-    // Filter by rating
-    const qualified = providers.filter(p =>
-      p.reputation?.rating >= minRating
-    );
+    if (providers.length === 0) {
+      throw new Error('No providers available');
+    }
+
+    // Filter by rating (if reputation data exists)
+    let qualified = providers.filter(p => {
+      const rating = p.reputation?.rating;
+      // If no rating exists, assume it's a new provider and allow it
+      return rating === undefined || rating >= minRating;
+    });
 
     if (qualified.length === 0) {
-      throw new Error('No qualified providers found');
+      console.warn('⚠️ No providers meet rating criteria, using all available providers');
+      qualified = providers;
     }
 
     if (autoSelect) {

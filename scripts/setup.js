@@ -10,7 +10,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { Keypair } = require('@solana/web3.js');
-const bs58 = require('bs58');
+const bs58 = require('bs58').default || require('bs58');
 
 console.log(`
 ╔══════════════════════════════════════════════════════════════╗
