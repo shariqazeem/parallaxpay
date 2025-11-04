@@ -1,6 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useWallet, useConnection } from '@solana/wallet-adapter-react'
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
+import { Transaction, SystemProgram, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js'
+import bs58 from 'bs58'
 
 interface InferencePanelProps {
   provider: any
@@ -8,6 +12,9 @@ interface InferencePanelProps {
 }
 
 export function InferencePanel({ provider, onTransaction }: InferencePanelProps) {
+  const { publicKey, sendTransaction } = useWallet()
+  const { connection } = useConnection()
+
   const [prompt, setPrompt] = useState('')
   const [selectedTier, setSelectedTier] = useState<'basic' | 'standard' | 'premium'>('standard')
   const [result, setResult] = useState<any>(null)
@@ -35,8 +42,43 @@ export function InferencePanel({ provider, onTransaction }: InferencePanelProps)
     }
   }, [prompt, selectedTier, provider])
 
+  const handlePayment = async (recipientAddress: string, amountUSD: number) => {
+    if (!publicKey) {
+      throw new Error('Wallet not connected')
+    }
+
+    // Use fixed 0.001 SOL for demo (meets rent exemption)
+    const lamports = 1_000_000
+
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: publicKey,
+        toPubkey: new PublicKey(recipientAddress),
+        lamports
+      })
+    )
+
+    const {
+      context: { slot: minContextSlot },
+      value: { blockhash, lastValidBlockHeight }
+    } = await connection.getLatestBlockhashAndContext()
+
+    transaction.recentBlockhash = blockhash
+    transaction.feePayer = publicKey
+
+    const signature = await sendTransaction(transaction, connection, { minContextSlot })
+    await connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature })
+
+    return signature
+  }
+
   const handleGenerate = async () => {
     if (!prompt.trim() || !provider) return
+
+    if (!publicKey) {
+      setError('Please connect your wallet first')
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -51,7 +93,8 @@ export function InferencePanel({ provider, onTransaction }: InferencePanelProps)
         premium: 512
       }
 
-      const response = await fetch(`${provider.url}/v1/inference`, {
+      // First attempt - check if payment required
+      let response = await fetch(`${provider.url}/v1/inference`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,20 +106,35 @@ export function InferencePanel({ provider, onTransaction }: InferencePanelProps)
         })
       })
 
+      // Handle 402 - make payment and retry
       if (response.status === 402) {
         const paymentInfo = await response.json()
-        setError(`Payment required: $${paymentInfo.pricing[selectedTier].price}. Use the marketplace to enable automatic payments.`)
 
-        onTransaction({
-          timestamp: new Date().toISOString(),
-          provider: provider.provider.name,
-          tier: selectedTier,
-          cost: estimatedCost,
-          status: 'pending_payment',
-          prompt: prompt.slice(0, 50) + '...'
-        })
+        try {
+          // Make the payment
+          const signature = await handlePayment(
+            provider.provider.wallet_address,
+            estimatedCost
+          )
 
-        return
+          // Retry with payment proof
+          response = await fetch(`${provider.url}/v1/inference`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Payment-Signature': signature,
+              'X-Payment-Amount': estimatedCost.toString()
+            },
+            body: JSON.stringify({
+              prompt,
+              max_tokens: tierConfig[selectedTier],
+              temperature: 0.7
+            })
+          })
+
+        } catch (paymentErr) {
+          throw new Error(`Payment failed: ${paymentErr instanceof Error ? paymentErr.message : 'Unknown error'}`)
+        }
       }
 
       if (!response.ok) {
@@ -143,7 +201,16 @@ export function InferencePanel({ provider, onTransaction }: InferencePanelProps)
             Powered by {provider.capabilities.models[0]}
           </p>
         </div>
+        <WalletMultiButton className="!bg-purple-500 hover:!bg-purple-600 !rounded-xl !text-sm" />
       </div>
+
+      {/* Wallet Connection Warning */}
+      {!publicKey && (
+        <div className="mb-5 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+          <p className="text-amber-400 font-medium text-sm">Connect Wallet</p>
+          <p className="text-amber-300 text-xs mt-1">Please connect your Solana wallet to make payments</p>
+        </div>
+      )}
 
       {/* Tier Selection */}
       <div className="mb-5">
