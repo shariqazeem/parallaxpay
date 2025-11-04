@@ -1,0 +1,31 @@
+{
+  "name": "parallaxpay-monorepo",
+  "version": "1.0.0",
+  "description": "ParallaxPay - Decentralized AI Inference Marketplace",
+  "private": true,
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "install:all": "npm install && cd agents/provider && npm install && cd ../client && npm install && cd ../../parallaxpayx402 && npm install --legacy-peer-deps",
+    "provider:dev": "cd agents/provider && npm run dev",
+    "client:demo": "cd agents/client && npm run demo",
+    "dashboard:dev": "cd parallaxpayx402 && npm run dev",
+    "test:all": "npm run test:provider && npm run test:client",
+    "test:provider": "cd agents/provider && npm test",
+    "test:client": "cd agents/client && npm test"
+  },
+  "keywords": [
+    "solana",
+    "x402",
+    "parallax",
+    "ai",
+    "marketplace",
+    "blockchain",
+    "autonomous-agents"
+  ],
+  "author": "ParallaxPay Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/parallaxpay"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@parallaxpay/client-agent",
+  "version": "1.0.0",
+  "description": "Autonomous AI client agent with x402 payment capabilities",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "demo": "tsx src/demo.ts"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.8",
+    "@faremeter/payment-solana": "latest",
+    "@faremeter/fetch": "latest",
+    "@faremeter/info": "latest",
+    "dotenv": "^16.4.5",
+    "bs58": "^6.0.0",
+    "axios": "^1.7.7",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.3"
+  }
+}

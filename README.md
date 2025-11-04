@@ -101,18 +101,32 @@ Traditional AI APIs require:
 
 ```
 parallaxpay/
-├── apps/
-│   ├── inference-provider/    # Provider agent exposing x402 AI endpoints
-│   ├── client-agent/          # Client agent consuming AI services
-│   └── dashboard/             # Next.js marketplace dashboard
-├── packages/
-│   ├── shared/                # Shared utilities and types
-│   ├── x402-solana/           # x402 + Solana payment handlers
-│   └── reputation/            # On-chain reputation oracle
+├── agents/
+│   ├── provider/              # 🤖 Provider agent exposing x402 AI endpoints
+│   │   ├── src/
+│   │   │   ├── index.ts       # Main server
+│   │   │   ├── routes/        # API routes (inference, payment, discovery)
+│   │   │   ├── services/      # Business logic (parallax, reputation, payment)
+│   │   │   └── middleware/    # x402 payment middleware
+│   │   ├── package.json
+│   │   └── .env.example
+│   └── client/                # 🤖 Autonomous client agent
+│       ├── src/
+│       │   ├── index.ts       # ClientAgent class
+│       │   ├── services/      # Discovery, payment, inference
+│       │   └── demo.ts        # Interactive demo
+│       ├── package.json
+│       └── .env.example
+├── parallaxpayx402/           # 🌐 Next.js marketplace dashboard
+│   ├── app/                   # Next.js 15 app router
+│   ├── components/            # React components
+│   ├── middleware.ts          # x402 middleware config
+│   └── package.json
+├── parallax/                  # 🌊 Gradient Parallax (submodule)
 ├── docs/
+│   ├── SETUP.md               # Detailed setup guide
 │   ├── ARCHITECTURE.md        # System architecture
-│   ├── API.md                 # API documentation
-│   └── DEPLOYMENT.md          # Deployment guide
+│   └── API.md                 # API documentation
 └── README.md
 ```
 
@@ -178,19 +192,38 @@ solana airdrop 2 <YOUR_WALLET_ADDRESS> --url devnet
 ### 6. Start the Stack
 
 ```bash
-# Terminal 1: Start Parallax scheduler
+# Terminal 1: Start Provider Agent (runs on port 4001)
+cd agents/provider
+npm install
+cp .env.example .env
+# Edit .env with your wallet private key
+npm run dev
+
+# Terminal 2: Start Frontend Dashboard (runs on port 3000)
+cd parallaxpayx402
+npm install --legacy-peer-deps
+cp .env.example .env.local
+# Edit .env.local with your configuration
+npm run dev
+
+# Terminal 3: Run Client Agent Demo
+cd agents/client
+npm install
+cp .env.example .env
+# Edit .env with your wallet private key
+npm run demo
+
+# Terminal 4 (Optional): Start Gradient Parallax
 cd parallax
 parallax run --host 0.0.0.0
-
-# Terminal 2: Start inference provider
-npm run provider:dev
-
-# Terminal 3: Start client agent
-npm run agent:dev
-
-# Terminal 4: Start dashboard
-npm run dashboard:dev
 ```
+
+### 7. Access the Platform
+
+- **Dashboard**: http://localhost:3000
+- **Provider API**: http://localhost:4001
+- **Health Check**: http://localhost:4001/health
+- **Provider Info**: http://localhost:4001/api/info
 
 ---
 
