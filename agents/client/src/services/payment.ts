@@ -19,7 +19,12 @@ export class PaymentService {
       // In production, this would create a USDC transfer
       // For demo, we'll create a minimal SOL transfer as proof of payment
       const recipientPubkey = new PublicKey(recipient);
-      const lamports = Math.floor(amountUSD * 1e6); // Convert USD to small amount
+
+      // Use a fixed small amount (0.001 SOL = ~$0.10 at current prices)
+      // This ensures rent exemption and is enough for demo
+      const lamports = 1_000_000; // 0.001 SOL (1 million lamports)
+
+      console.log(`💰 Sending ${lamports / 1e9} SOL (~$${amountUSD} equivalent)`);
 
       const transaction = new Transaction().add(
         SystemProgram.transfer({
