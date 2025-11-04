@@ -38,16 +38,14 @@ export default function MarketplacePage() {
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)
   const [transactions, setTransactions] = useState<any[]>([])
 
-  // Discover providers on mount
   useEffect(() => {
     discoverProviders()
-    const interval = setInterval(discoverProviders, 30000) // Refresh every 30s
+    const interval = setInterval(discoverProviders, 30000)
     return () => clearInterval(interval)
   }, [])
 
   const discoverProviders = async () => {
     try {
-      // Query known provider endpoints
       const providerUrls = [
         'http://localhost:4001',
         process.env.NEXT_PUBLIC_PROVIDER_ENDPOINT,
@@ -71,7 +69,6 @@ export default function MarketplacePage() {
       const validProviders = discovered.filter(Boolean) as Provider[]
       setProviders(validProviders)
 
-      // Auto-select best provider
       if (validProviders.length > 0 && !selectedProvider) {
         const best = validProviders.sort((a, b) =>
           b.reputation.rating - a.reputation.rating
@@ -90,61 +87,67 @@ export default function MarketplacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen bg-[#0a0a0f]">
       {/* Header */}
-      <div className="border-b border-white/10 bg-black/20 backdrop-blur-lg">
-        <div className="container mx-auto px-6 py-4">
+      <div className="border-b border-white/5 bg-black/40 backdrop-blur-xl">
+        <div className="container mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white">
-                🤖 AI Marketplace
-              </h1>
-              <p className="text-gray-400 text-sm">
-                Decentralized AI inference powered by Gradient Parallax
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                <span className="text-2xl">⚡</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  AI Marketplace
+                </h1>
+                <p className="text-gray-500 text-xs">
+                  Decentralized inference on Solana
+                </p>
+              </div>
             </div>
             <Link
               href="/"
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-colors border border-white/10 text-sm"
             >
-              ← Back to Home
+              ← Home
             </Link>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Provider Discovery */}
-          <div className="lg:col-span-1">
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Providers */}
+            <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 border border-white/5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                  Live Providers
+                <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${providers.length > 0 ? 'bg-emerald-400' : 'bg-gray-600'} ${providers.length > 0 ? 'animate-pulse' : ''}`}></span>
+                  Providers
                 </h2>
                 <button
                   onClick={discoverProviders}
-                  className="text-sm px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded transition-colors"
+                  className="text-xs px-2 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 rounded transition-colors"
                 >
-                  🔄 Refresh
+                  Scan
                 </button>
               </div>
 
               {loading ? (
-                <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                  <p className="text-gray-400 mt-2">Discovering providers...</p>
+                <div className="text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-purple-400"></div>
+                  <p className="text-gray-600 text-xs mt-3">Scanning...</p>
                 </div>
               ) : providers.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-400">No providers found</p>
-                  <p className="text-gray-500 text-sm mt-2">
-                    Make sure provider agent is running
-                  </p>
+                <div className="text-center py-12">
+                  <div className="w-12 h-12 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center mx-auto mb-3">
+                    <span className="text-gray-600">📡</span>
+                  </div>
+                  <p className="text-gray-600 text-xs">No providers found</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {providers.map((provider, i) => (
                     <ProviderCard
                       key={i}
@@ -155,48 +158,42 @@ export default function MarketplacePage() {
                   ))}
                 </div>
               )}
-
-              {providers.length > 0 && (
-                <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                  <p className="text-green-300 text-sm">
-                    ✅ Found {providers.length} provider{providers.length !== 1 ? 's' : ''}
-                  </p>
-                  <p className="text-green-400/70 text-xs mt-1">
-                    Autonomous discovery active
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Stats */}
             {selectedProvider && (
-              <div className="mt-6 bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
-                <h3 className="text-lg font-bold text-white mb-4">
-                  📊 Provider Stats
+              <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 border border-white/5">
+                <h3 className="text-sm font-semibold text-white mb-4">
+                  Statistics
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Success Rate</span>
-                    <span className="text-white font-bold">
-                      {selectedProvider.reputation.success_rate.toFixed(1)}%
-                    </span>
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xs text-gray-500">Success Rate</span>
+                      <span className="text-sm text-white font-medium">
+                        {selectedProvider.reputation.success_rate.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="h-1 bg-gray-900 rounded-full overflow-hidden">
+                      <div className="h-full bg-purple-500" style={{width: `${selectedProvider.reputation.success_rate}%`}}></div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Avg Response</span>
-                    <span className="text-white font-bold">
+                  <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                    <span className="text-xs text-gray-500">Response Time</span>
+                    <span className="text-sm text-white font-medium">
                       {selectedProvider.reputation.avg_response_time_ms}ms
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Transactions</span>
-                    <span className="text-white font-bold">
+                  <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                    <span className="text-xs text-gray-500">Transactions</span>
+                    <span className="text-sm text-white font-medium">
                       {selectedProvider.reputation.total_transactions}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Rating</span>
-                    <span className="text-white font-bold">
-                      {selectedProvider.reputation.rating.toFixed(1)}⭐
+                  <div className="flex justify-between items-center pt-2 border-t border-white/5">
+                    <span className="text-xs text-gray-500">Rating</span>
+                    <span className="text-sm text-white font-medium">
+                      {selectedProvider.reputation.rating.toFixed(1)} ⭐
                     </span>
                   </div>
                 </div>
@@ -204,17 +201,16 @@ export default function MarketplacePage() {
             )}
           </div>
 
-          {/* Center: Inference Panel */}
-          <div className="lg:col-span-2">
+          {/* Main */}
+          <div className="lg:col-span-3 space-y-6">
             <InferencePanel
               provider={selectedProvider}
               onTransaction={addTransaction}
             />
 
-            {/* Transaction History */}
-            <div className="mt-6">
+            {transactions.length > 0 && (
               <TransactionHistory transactions={transactions} />
-            </div>
+            )}
           </div>
         </div>
       </div>

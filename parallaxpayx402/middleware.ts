@@ -7,7 +7,8 @@ const network = process.env.NEXT_PUBLIC_NETWORK as Network
 const facilitatorUrl = process.env.NEXT_PUBLIC_FACILITATOR_URL as Resource
 const cdpClientKey = process.env.NEXT_PUBLIC_CDP_CLIENT_KEY as string
 
-const x402PaymentMiddleware = paymentMiddleware(
+// Only enable x402 middleware if CDP key is configured
+const x402PaymentMiddleware = cdpClientKey ? paymentMiddleware(
   address,
   {
     // ParallaxPay AI Inference Tiers
@@ -42,9 +43,14 @@ const x402PaymentMiddleware = paymentMiddleware(
     appName: 'ParallaxPay - AI Inference Marketplace',
     sessionTokenEndpoint: '/api/x402/session-token',
   },
-)
+) : null
 
 export const middleware = (req: NextRequest) => {
+  // If x402 middleware is not configured, allow all requests through
+  if (!x402PaymentMiddleware) {
+    return undefined
+  }
+
   const delegate = x402PaymentMiddleware as unknown as (
     request: NextRequest,
   ) => ReturnType<typeof x402PaymentMiddleware>
