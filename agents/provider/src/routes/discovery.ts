@@ -49,7 +49,7 @@ router.get('/', (req, res) => {
       success_rate: stats.successRate,
       avg_response_time_ms: stats.averageResponseTime,
       uptime_ms: stats.uptime,
-      rating: this.calculateRating(stats)
+      rating: calculateRating(stats)
     },
     endpoints: {
       inference: '/v1/inference',
