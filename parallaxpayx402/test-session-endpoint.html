@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Session Endpoint</title>
+</head>
+<body>
+    <h1>Test ParallaxPay Session Endpoint</h1>
+    <button onclick="testEndpoint()">Test Session Token Endpoint</button>
+    <pre id="result"></pre>
+    
+    <script>
+        async function testEndpoint() {
+            const resultEl = document.getElementById('result');
+            resultEl.textContent = 'Testing...';
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/x402/session-token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        paymentProof: 'test_proof_123', 
+                        resource: '/content/basic' 
+                    })
+                });
+                
+                const data = await response.json();
+                resultEl.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success) {
+                    resultEl.textContent = '✅ YOUR CODE WORKS!\n\n' + JSON.stringify(data, null, 2);
+                } else {
+                    resultEl.textContent = '❌ Endpoint returned error:\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultEl.textContent = '❌ Network error:\n\n' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
