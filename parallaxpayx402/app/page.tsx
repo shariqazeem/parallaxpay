@@ -28,6 +28,19 @@ export default function HomePage() {
           </p>
 
           {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <Link
+              href="/marketplace"
+              className="group relative px-10 py-5 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 text-white font-bold text-lg rounded-lg hover:scale-105 transition-all shadow-2xl animate-pulse hover:animate-none overflow-hidden"
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                🤖 Launch AI Marketplace
+                <span className="text-2xl">→</span>
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </Link>
+          </div>
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
             <Link
               href="/content/basic"
