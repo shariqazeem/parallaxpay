@@ -14,24 +14,33 @@ import { Connection } from '@solana/web3.js';
  * 3. Server verifies payment → returns protected content
  */
 
-const PAYMENT_REQUIRED = {
-  amount: '10000', // $0.01 in USDC (6 decimals)
-  recipient: '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y', // Your wallet
-  facilitator: 'https://facilitator.corbits.dev',
-  network: 'solana-devnet',
-  token: 'USDC',
-  description: 'Protected API access',
-};
+// USDC on Solana devnet
+const USDC_DEVNET = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
 
 export async function GET(request: NextRequest) {
   const xPaymentHeader = request.headers.get('x-payment');
 
   // No payment provided → Return 402 Payment Required
   if (!xPaymentHeader) {
+    // Return proper x402 format that Corbits expects
     return NextResponse.json(
       {
-        error: 'Payment Required',
-        payment: PAYMENT_REQUIRED,
+        x402Version: 1,
+        accepts: [
+          {
+            scheme: 'exact',
+            network: 'solana-devnet',
+            token: {
+              address: USDC_DEVNET,
+              symbol: 'USDC',
+              decimals: 6,
+            },
+            payTo: '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y',
+            amount: '10000', // $0.01 in USDC (6 decimals)
+            resource: request.url,
+            description: 'Protected API access - Demo endpoint',
+          },
+        ],
       },
       { status: 402 }
     );
