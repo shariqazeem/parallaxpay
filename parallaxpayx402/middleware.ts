@@ -1,66 +1,66 @@
 // parallaxpayx402/middleware.ts
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import { paymentMiddleware, Network } from 'x402-next'
 
 /**
- * TEMPORARY: X402 middleware disabled for debugging
- * The x402-next package is causing "_bn" errors during payment processing
- * This might be due to:
- * 1. Incompatibility with Solana web3.js version
- * 2. CDP client key issues
- * 3. Network configuration problems
+ * X402 Payment Middleware Configuration
  *
- * For now, we're allowing free access to test the AI inference functionality
- * Once working, we'll re-enable X402 payments
+ * This middleware implements the x402 protocol for Solana payments.
+ * When a user tries to access protected content (/content/*), they must pay.
+ *
+ * Flow:
+ * 1. User requests /content/basic (or standard/premium)
+ * 2. Middleware checks for payment session
+ * 3. If no session, returns 402 with Coinbase Pay modal
+ * 4. User pays with USDC on Solana devnet
+ * 5. Facilitator verifies payment on-chain
+ * 6. Session created, user gets access
  */
 
-export const middleware = (req: NextRequest) => {
-  // Allow all requests to pass through for now
-  console.log('[ParallaxPay Middleware] Request:', req.nextUrl.pathname, '(Payment temporarily disabled)')
-  return NextResponse.next()
-}
+// Your provider wallet address that will receive payments
+const receiverAddress = process.env.NEXT_PUBLIC_RECEIVER_ADDRESS || '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y'
 
-export const config = {
-  matcher: ['/content/:path*'],
-}
+// Network: solana-devnet for testing, solana-mainnet-beta for production
+const network = (process.env.NEXT_PUBLIC_NETWORK as Network) || 'solana-devnet'
 
-/*
-// ORIGINAL X402 CONFIGURATION (commented out for debugging)
-import { Address } from 'viem'
-import { paymentMiddleware, Resource, Network } from 'x402-next'
+// Facilitator URL - using Corbits facilitator for Solana support
+const facilitatorUrl = process.env.NEXT_PUBLIC_FACILITATOR_URL || 'https://facilitator.corbits.dev'
 
-const address = '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y' as Address
-const network = 'solana-devnet' as Network
-const facilitatorUrl = 'https://x402.org/facilitator' as Resource
-const cdpClientKey = '3uyu43EHCwgVIQx6a8cIfSkxp6cXgU30'
+// CDP Client Key for Coinbase Pay
+const cdpClientKey = process.env.NEXT_PUBLIC_CDP_CLIENT_KEY || '3uyu43EHCwgVIQx6a8cIfSkxp6cXgU30'
 
+// Configure payment middleware with three pricing tiers
 const x402PaymentMiddleware = paymentMiddleware(
-  address,
+  receiverAddress as any,
   {
     '/content/basic': {
       price: '$0.01',
       config: {
         description: 'Basic AI Inference - Qwen 0.6B (100 tokens)',
+        maxTimeoutSeconds: 120,
       },
       network,
     },
     '/content/standard': {
-      price: '$0.10',
+      price: '$0.05',
       config: {
-        description: 'Standard AI Inference - Qwen 7B (500 tokens)',
+        description: 'Standard AI Inference - Qwen 7B (256 tokens)',
+        maxTimeoutSeconds: 120,
       },
       network,
     },
     '/content/premium': {
-      price: '$0.50',
+      price: '$0.25',
       config: {
-        description: 'Premium AI Inference - Qwen 72B (2000 tokens)',
+        description: 'Premium AI Inference - Qwen 72B (512 tokens)',
+        maxTimeoutSeconds: 180,
       },
       network,
     },
   },
   {
-    url: facilitatorUrl,
+    url: facilitatorUrl as any,
   },
   {
     cdpClientKey,
@@ -71,9 +71,7 @@ const x402PaymentMiddleware = paymentMiddleware(
 )
 
 export const middleware = (req: NextRequest) => {
-  if (!req.nextUrl.pathname.startsWith('/content/')) {
-    return NextResponse.next()
-  }
+  console.log('[x402] Processing request:', req.nextUrl.pathname)
 
   const delegate = x402PaymentMiddleware as unknown as (
     request: NextRequest,
@@ -81,4 +79,7 @@ export const middleware = (req: NextRequest) => {
 
   return delegate(req)
 }
-*/
+
+export const config = {
+  matcher: ['/content/:path*'],
+}
