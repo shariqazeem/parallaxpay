@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "displayName": "ParallaxPay - AI Inference Marketplace",
-  "description": "Decentralized AI inference marketplace powered by Gradient Parallax, x402, and Solana",
-  "usecase": "Payments",
+  "description": "Decentralized AI inference marketplace powered by Gradient Parallax and Solana",
+  "usecase": "AI",
   "keywords": [
     "solana",
     "nextjs",
-    "x402",
-    "template",
-    "starter"
+    "parallax",
+    "ai",
+    "marketplace"
   ],
   "create-solana-dapp": {
     "instructions": [
@@ -47,9 +47,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sonner": "^1.7.4",
-    "tweetnacl": "^1.0.3",
-    "viem": "^2.38.5",
-    "x402-next": "^0.7.1"
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -60,8 +58,5 @@
     "eslint-config-next": "15.0.3",
     "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  "optionalDependencies": {
-    "pino-pretty": "^13.1.2"
   }
 }

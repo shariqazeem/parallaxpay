@@ -10,9 +10,6 @@ const nextConfig: NextConfig = {
     ],
   },
   webpack: (config, { isServer }) => {
-    // Fix for pino-pretty and other optional dependencies
-    config.externals.push('pino-pretty', 'lokijs', 'encoding')
-
     // Fix for WalletConnect and Solana wallet adapters
     if (!isServer) {
       config.resolve.fallback = {
