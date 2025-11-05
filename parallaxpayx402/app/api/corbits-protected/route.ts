@@ -37,7 +37,9 @@ export async function GET(request: NextRequest) {
             mimeType: 'application/json', // Content type we'll return
             resource: request.url,
             description: 'Protected API access - Demo endpoint',
-            extra: {}, // Additional metadata (required by Corbits, can be empty)
+            extra: {
+              feePayer: '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y', // Who pays transaction fees (same as payTo for demo)
+            },
           },
         ],
       },
