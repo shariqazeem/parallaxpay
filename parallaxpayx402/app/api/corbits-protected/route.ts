@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
             mimeType: 'application/json', // Content type we'll return
             resource: request.url,
             description: 'Protected API access - Demo endpoint',
+            extra: {}, // Additional metadata (required by Corbits, can be empty)
           },
         ],
       },
