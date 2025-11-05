@@ -38,23 +38,31 @@ export default function CorbitsDemoPage() {
     setResult('')
 
     try {
+      console.log('🔍 Starting payment flow...')
+      console.log('📍 Wallet address:', publicKey.toBase58())
+      console.log('🌐 Network: devnet')
+
       // Create Corbits-compatible wallet from Solana Wallet Adapter
       const corbitsWallet: CorbitsWallet = {
         network: 'devnet',
         publicKey,
         updateTransaction: async (tx: VersionedTransaction) => {
+          console.log('✍️ Signing transaction...')
           const signedTx = await signTransaction(tx)
+          console.log('✅ Transaction signed!')
           return signedTx as VersionedTransaction
         },
       }
 
       // Create payment-enabled fetch
+      console.log('🔧 Creating payment handler...')
       const fetchWithPayer = createPaymentFetch({
         wallet: corbitsWallet,
         connection,
         network: 'devnet',
         token: 'USDC',
       })
+      console.log('✅ Payment handler created')
 
       // Make a paid API call to our protected endpoint
       // Note: Using local endpoint to avoid CORS issues

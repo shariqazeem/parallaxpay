@@ -38,7 +38,10 @@ export async function GET(request: NextRequest) {
             resource: request.url,
             description: 'Protected API access - Demo endpoint',
             extra: {
-              feePayer: '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y', // Who pays transaction fees (same as payTo for demo)
+              // For demo: user's wallet pays transaction fees
+              // In production with a facilitator, this would be the facilitator's address
+              // Note: This is just a placeholder - Corbits will use the connected wallet
+              feePayer: '11111111111111111111111111111111', // System program (placeholder)
             },
           },
         ],
