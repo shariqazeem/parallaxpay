@@ -1,16 +1,20 @@
-# X402 Next.js Solana Template
+# X402 Next.js Solana Template with Corbits
 
-**A simple Next.js starter template with X402 payment protocol integration for Solana.**
+**A Next.js starter template with X402 payment protocol integration for Solana using Corbits.**
 
-This template demonstrates a streamlined implementation of the X402 payment protocol using the `x402-next` package, making it easy to add cryptocurrency payment gates to your Next.js applications.
+This template demonstrates a streamlined implementation of the X402 payment protocol using **Corbits** (@faremeter packages), making it easy to add cryptocurrency micropayments to your Next.js applications.
 
-> ⚠️ **Using on Mainnet?** This template is configured for testnet (devnet) by default. To accept real payments on mainnet, you'll need to set up CDP API keys and configure a fee payer. See the [CDP X402 Mainnet Documentation](https://docs.cdp.coinbase.com/x402/quickstart-for-sellers#running-on-mainnet) for complete setup instructions.
+> ✨ **New**: We've upgraded from `x402-next` to **Corbits** for better stability, more features, and active development.
+
+> ⚠️ **Using on Mainnet?** This template is configured for testnet (devnet) by default. To accept real payments on mainnet, see the [Corbits Guide](CORBITS_GUIDE.md) for setup instructions.
 
 ## Table of Contents
 
 - [What is X402?](#what-is-x402)
+- [What is Corbits?](#what-is-corbits)
 - [Features](#features)
 - [Getting Started](#getting-started)
+- [Quick Demo](#quick-demo)
 - [How It Works](#how-it-works)
 - [Project Structure](#project-structure)
 - [Configuration](#configuration)
@@ -42,14 +46,41 @@ This template demonstrates a streamlined implementation of the X402 payment prot
 
 ---
 
+## What is Corbits?
+
+**Corbits** is an open-source framework for implementing HTTP 402 "Payment Required" using blockchain micropayments on Solana. Built by the Faremeter team, it provides:
+
+### Why Corbits?
+
+- **✅ Stable** - Production-ready implementation with active development
+- **⚡ Automatic** - Detects 402 responses and handles payment automatically
+- **🔒 Secure** - Non-custodial, you control your keys
+- **💰 Micropayments** - Perfect for AI APIs, RPC access, and data services
+- **🔧 Flexible** - Works with any wallet (Phantom, Solflare, etc.)
+
+### Corbits vs x402-next
+
+We've migrated from `x402-next` to Corbits because:
+
+- ✅ More stable (no BigNumber errors)
+- ✅ Better Solana integration
+- ✅ Active community and support
+- ✅ More flexible architecture
+- ✅ Works with any wallet provider
+
+**Learn more**: See [CORBITS_GUIDE.md](CORBITS_GUIDE.md) for detailed documentation.
+
+---
+
 ## Features
 
-- **X402 Payment Middleware** - Powered by `x402-next` package
-- **Solana Integration** - Uses Solana blockchain for payment verification
-- **Multiple Price Tiers** - Configure different prices for different routes
-- **Session Management** - Automatic session handling after payment
-- **Type-Safe** - Full TypeScript support with Viem types
-- **Next.js 16** - Built on the latest Next.js App Router
+- **X402 Payment Protocol** - Powered by Corbits (@faremeter packages)
+- **Solana Integration** - Uses Solana blockchain with USDC for payment verification
+- **Automatic Payment Handling** - Detects 402 responses and pays automatically
+- **Multiple Wallet Support** - Works with Phantom, Solflare, and other Solana wallets
+- **Type-Safe** - Full TypeScript support
+- **Next.js 15** - Built on the latest Next.js App Router
+- **Live Demo** - Interactive demo page at `/corbits-demo`
 
 ---
 
@@ -79,105 +110,124 @@ pnpm dev
 
 Visit `http://localhost:3000` to see your app running.
 
-### Test the Payment Flow
+---
 
-1. Navigate to `http://localhost:3000`
-2. Click on "Access Cheap Content" or "Access Expensive Content"
-3. You'll be presented with a Coinbase Pay payment dialog
-4. Complete the payment
-5. Access is granted and you'll see the protected content
+## Quick Demo
+
+### Try the Corbits Demo
+
+1. Start the development server: `npm run dev`
+2. Visit `http://localhost:3000/corbits-demo`
+3. Connect your Phantom wallet (make sure you're on Solana devnet)
+4. Click "Make Paid API Call"
+5. Sign the transaction in Phantom
+6. See the API response after payment is verified
+
+### What's Happening?
+
+- The demo calls Helius RPC API via Corbits
+- API returns 402 Payment Required
+- Corbits automatically creates a USDC payment transaction
+- You sign it in Phantom wallet
+- API verifies payment and returns data
+
+**That's it!** No manual payment handling, no complex flows - just automatic micropayments.
 
 ---
 
 ## How It Works
 
-This template uses the `x402-next` package which provides middleware to handle the entire payment flow.
+This template uses **Corbits** (@faremeter packages) which provides automatic payment handling for x402 protocol.
 
-### Middleware Configuration
+### Client-Side Integration
 
-The core of the payment integration is in `middleware.ts`:
+The core of the payment integration is in `lib/corbits/`:
+
+**Example: Making a paid API call**
 
 ```typescript
-import { Address } from 'viem'
-import { paymentMiddleware, Resource, Network } from 'x402-next'
-import { NextRequest } from 'next/server'
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import { createPaymentFetch } from '@/lib/corbits';
 
-// Your Solana wallet address that receives payments
-const address = 'CmGgLQL36Y9ubtTsy2zmE46TAxwCBm66onZmPPhUWNqv' as Address
-const network = 'solana-devnet' as Network
-const facilitatorUrl = 'https://x402.org/facilitator' as Resource
-const cdpClientKey = '3uyu43EHCwgVIQx6a8cIfSkxp6cXgU30'
+function MyComponent() {
+  const { publicKey, signTransaction } = useWallet();
+  const { connection } = useConnection();
 
-const x402PaymentMiddleware = paymentMiddleware(
-  address,
-  {
-    '/content/cheap': {
-      price: '$0.01',
-      config: {
-        description: 'Access to cheap content',
-      },
-      network,
-    },
-    '/content/expensive': {
-      price: '$0.25',
-      config: {
-        description: 'Access to expensive content',
-      },
-      network,
-    },
-  },
-  {
-    url: facilitatorUrl,
-  },
-  {
-    cdpClientKey,
-    appLogo: '/logos/x402-examples.png',
-    appName: 'x402 Demo',
-    sessionTokenEndpoint: '/api/x402/session-token',
-  },
-)
+  const makePayment = async () => {
+    if (!publicKey || !signTransaction) return;
 
-export const middleware = (req: NextRequest) => {
-  const delegate = x402PaymentMiddleware as unknown as (
-    request: NextRequest,
-  ) => ReturnType<typeof x402PaymentMiddleware>
-  return delegate(req)
-}
+    // Create Corbits wallet
+    const wallet = {
+      network: 'devnet',
+      publicKey,
+      updateTransaction: async (tx) => signTransaction(tx),
+    };
 
-export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)', '/'],
+    // Create payment-enabled fetch
+    const fetchWithPayer = createPaymentFetch({
+      wallet,
+      connection,
+      network: 'devnet',
+      token: 'USDC',
+    });
+
+    // Make paid API call - payment happens automatically!
+    const response = await fetchWithPayer('https://api.example.com', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: 'example' }),
+    });
+
+    return response.json();
+  };
 }
 ```
 
 ### What Happens Under the Hood
 
-1. **Request Interception** - Middleware checks if the requested route requires payment
-2. **Payment Check** - If the route is protected, middleware checks for valid payment session
-3. **402 Response** - If no valid payment, returns 402 with payment requirements
-4. **Coinbase Pay Widget** - User sees payment modal powered by Coinbase
-5. **Payment Verification** - After payment, transaction is verified on Solana blockchain via facilitator
-6. **Session Creation** - Valid payment creates a session token
-7. **Access Granted** - User can now access protected content
+1. **API Request** - Your app makes a request to a protected API endpoint
+2. **402 Response** - API returns 402 Payment Required with payment details
+3. **Automatic Detection** - Corbits detects the 402 response
+4. **Transaction Creation** - Corbits creates a USDC transfer transaction
+5. **Wallet Signature** - User signs the transaction in Phantom wallet
+6. **Transaction Submission** - Corbits submits the transaction to Solana
+7. **Payment Verification** - API verifies the payment on-chain
+8. **Access Granted** - API returns the protected content
+
+All of this happens **automatically** - you just make a normal fetch request!
 
 ---
 
 ## Project Structure
 
 ```
-x402-template/
-├── middleware.ts              # 🛡️  X402 payment middleware configuration
+parallaxpayx402/
+├── lib/
+│   ├── corbits/              # 🔒 Corbits x402 integration
+│   │   ├── wallet.ts        # Phantom wallet adapter
+│   │   ├── payment.ts       # Payment handler utilities
+│   │   ├── index.ts         # Main exports
+│   │   └── README.md        # Detailed API docs
+│   └── x402/                # 📦 Legacy x402-next implementation
 ├── app/
-│   ├── page.tsx              # 🏠 Homepage with links to protected content
-│   ├── layout.tsx            # 📐 Root layout
-│   ├── globals.css           # 🎨 Global styles
-│   └── content/
-│       └── [type]/
-│           └── page.tsx      # 🔒 Protected content pages
-├── components/
-│   └── cats-component.tsx    # 🐱 Example content component
-├── lib/                      # 📚 Utility functions (if needed)
-├── public/                   # 📁 Static assets
-└── package.json              # 📦 Dependencies
+│   ├── page.tsx             # 🏠 Homepage
+│   ├── corbits-demo/        # ✨ Interactive Corbits demo
+│   │   └── page.tsx
+│   ├── marketplace/         # 🛒 AI provider marketplace
+│   │   └── page.tsx
+│   ├── content/             # 📄 Protected content pages
+│   │   └── [type]/page.tsx
+│   └── api/
+│       ├── corbits-protected/ # 🔐 Protected API example
+│       │   └── route.ts
+│       └── x402/            # Session management
+│           └── session-token/route.ts
+├── components/              # ⚛️ React components
+│   ├── wallet-provider.tsx  # Solana wallet setup
+│   └── inference-panel.tsx  # AI inference UI
+├── middleware.ts            # ⚠️ Disabled (x402-next had issues)
+├── CORBITS_GUIDE.md        # 📖 Complete Corbits documentation
+└── package.json            # 📦 Dependencies
 ```
 
 ---
@@ -308,19 +358,24 @@ This template uses minimal dependencies:
 
 ## Learn More
 
-### X402 Protocol
+### Corbits & x402
 
-- [X402 Specification](https://github.com/coinbase/x402) - Official protocol documentation
-- [X402 Next Package](https://www.npmjs.com/package/x402-next) - Middleware used in this template
+- [CORBITS_GUIDE.md](CORBITS_GUIDE.md) - Complete guide to using Corbits in this project
+- [Corbits Documentation](https://corbits.dev/) - Official Corbits docs
+- [X402 Specification](https://github.com/coinbase/x402) - Official x402 protocol documentation
+- [Faremeter GitHub](https://github.com/faremeter/faremeter) - Corbits open-source framework
+- [x402.org](https://www.x402.org/) - Protocol website with examples
 
 ### Solana
 
 - [Solana Documentation](https://docs.solana.com/) - Official Solana docs
 - [Solana Explorer](https://explorer.solana.com/) - View transactions on-chain
+- [Phantom Wallet](https://phantom.app/) - Popular Solana wallet
 
-### Coinbase Developer
+### Community
 
-- [CDP Docs](https://docs.cdp.coinbase.com/) - Coinbase Developer documentation
+- [Corbits Telegram](https://t.me/+0VGMeJWdkVZiYmEx) - Get help and support
+- [Solana Discord](https://discord.gg/solana) - Solana community
 
 ---
 

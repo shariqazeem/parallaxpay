@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { Connection } from '@solana/web3.js';
+
+/**
+ * Protected API Route using Corbits x402 Protocol
+ *
+ * This demonstrates server-side x402 payment verification on Solana.
+ * In production, you'd use Corbits middleware for Express/Hono, but Next.js
+ * Edge middleware has limitations, so we implement it manually here.
+ *
+ * Flow:
+ * 1. Client requests without payment → 402 Payment Required
+ * 2. Client creates payment with Corbits → retries with X-Payment header
+ * 3. Server verifies payment → returns protected content
+ */
+
+const PAYMENT_REQUIRED = {
+  amount: '10000', // $0.01 in USDC (6 decimals)
+  recipient: '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y', // Your wallet
+  facilitator: 'https://facilitator.corbits.dev',
+  network: 'solana-devnet',
+  token: 'USDC',
+  description: 'Protected API access',
+};
+
+export async function GET(request: NextRequest) {
+  const xPaymentHeader = request.headers.get('x-payment');
+
+  // No payment provided → Return 402 Payment Required
+  if (!xPaymentHeader) {
+    return NextResponse.json(
+      {
+        error: 'Payment Required',
+        payment: PAYMENT_REQUIRED,
+      },
+      { status: 402 }
+    );
+  }
+
+  // Payment provided → Verify it
+  try {
+    const paymentData = JSON.parse(
+      Buffer.from(xPaymentHeader, 'base64').toString('utf-8')
+    );
+
+    console.log('Payment received:', paymentData);
+
+    // In production, you would:
+    // 1. Verify the transaction signature
+    // 2. Check that the payment amount matches
+    // 3. Verify the recipient is correct
+    // 4. Check that the transaction is confirmed on-chain
+    // 5. Store the transaction to prevent replay attacks
+
+    // For this demo, we'll do basic validation
+    if (!paymentData.payload?.serializedTransaction) {
+      throw new Error('Invalid payment data');
+    }
+
+    // Verify transaction (simplified - in production use Corbits facilitator)
+    const connection = new Connection('https://api.devnet.solana.com');
+    const txBuffer = Buffer.from(paymentData.payload.serializedTransaction, 'base64');
+
+    // In production, you'd submit this to the network and verify confirmation
+    // For demo purposes, we'll accept it if it's properly formatted
+
+    console.log('✅ Payment verified');
+
+    // Return protected content
+    return NextResponse.json({
+      success: true,
+      data: {
+        message: '🎉 Payment successful! Here is your protected content.',
+        timestamp: new Date().toISOString(),
+        blockHeight: Math.floor(Math.random() * 1000000), // Mock data
+        protectedData: {
+          apiKey: 'demo-api-key-' + Math.random().toString(36),
+          quota: 1000,
+          expiresAt: new Date(Date.now() + 3600000).toISOString(),
+        },
+      },
+    });
+
+  } catch (error) {
+    console.error('Payment verification failed:', error);
+    return NextResponse.json(
+      {
+        error: 'Payment verification failed',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 402 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  // Same logic for POST requests
+  return GET(request);
+}

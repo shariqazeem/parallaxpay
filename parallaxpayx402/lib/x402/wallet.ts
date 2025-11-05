@@ -13,23 +13,26 @@ export interface X402Wallet {
   signMessage(message: Uint8Array): Promise<Uint8Array>;
 }
 
+// Legacy interface - use lib/corbits/wallet.ts for new code
 export interface PhantomProvider {
   publicKey: PublicKey;
   isConnected: boolean;
+  isPhantom?: boolean;
   connect(): Promise<{ publicKey: PublicKey }>;
   disconnect(): Promise<void>;
   signTransaction<T extends Transaction | VersionedTransaction>(transaction: T): Promise<T>;
   signMessage(message: Uint8Array, encoding: string): Promise<{ signature: Uint8Array }>;
 }
 
-declare global {
-  interface Window {
-    solana?: PhantomProvider;
-    phantom?: {
-      solana?: PhantomProvider;
-    };
-  }
-}
+// Commented out to avoid conflicts with Corbits wallet types
+// declare global {
+//   interface Window {
+//     solana?: PhantomProvider;
+//     phantom?: {
+//       solana?: PhantomProvider;
+//     };
+//   }
+// }
 
 /**
  * Create wallet from Phantom browser extension
@@ -62,18 +65,19 @@ export async function createPhantomWallet(): Promise<X402Wallet> {
 
 /**
  * Get Phantom provider (tries both window.solana and window.phantom.solana)
+ * @deprecated Use lib/corbits/wallet.ts for new code
  */
 function getPhantomProvider(): PhantomProvider | null {
   if (typeof window === 'undefined') return null;
-  
-  if (window.phantom?.solana?.isPhantom) {
-    return window.phantom.solana;
+
+  if ((window as any).phantom?.solana?.isPhantom) {
+    return (window as any).phantom.solana as PhantomProvider;
   }
-  
-  if (window.solana?.isPhantom) {
-    return window.solana as PhantomProvider;
+
+  if ((window as any).solana?.isPhantom) {
+    return (window as any).solana as PhantomProvider;
   }
-  
+
   return null;
 }
 
