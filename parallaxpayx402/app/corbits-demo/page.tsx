@@ -71,7 +71,17 @@ export default function CorbitsDemoPage() {
 
     } catch (err) {
       console.error('Payment error:', err)
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      let errorMessage = err instanceof Error ? err.message : 'Unknown error'
+
+      // Provide helpful error messages
+      if (errorMessage.includes('failed to complete payment after retries')) {
+        errorMessage = 'Payment failed. Please ensure you have:\n' +
+          '• USDC on Solana devnet (at least $0.01)\n' +
+          '• SOL on devnet for transaction fees (at least 0.01 SOL)\n' +
+          '• Your wallet is set to Solana Devnet in Phantom settings'
+      }
+
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -118,6 +128,25 @@ export default function CorbitsDemoPage() {
             </div>
           )}
 
+          {/* Requirements Warning */}
+          {publicKey && (
+            <div className="mb-6 p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+              <p className="text-purple-400 font-medium mb-2">💰 Required for Payment</p>
+              <p className="text-purple-300 text-sm mb-2">
+                Your wallet needs the following on <strong>Solana Devnet</strong>:
+              </p>
+              <ul className="text-purple-300 text-sm space-y-1 ml-4">
+                <li>• <strong>USDC</strong>: At least $0.01 (10,000 smallest units)</li>
+                <li>• <strong>SOL</strong>: At least 0.01 SOL for transaction fees</li>
+              </ul>
+              <div className="mt-3 text-xs text-purple-400/70 space-y-1">
+                <p>Get devnet tokens:</p>
+                <p>• SOL: <a href="https://faucet.solana.com" target="_blank" className="underline hover:text-purple-300">https://faucet.solana.com</a></p>
+                <p>• USDC: Use SPL Token Faucet or swap devnet SOL</p>
+              </div>
+            </div>
+          )}
+
           {/* Info Box */}
           <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
             <p className="text-blue-400 font-medium mb-2">ℹ️ How it works</p>
@@ -153,7 +182,7 @@ export default function CorbitsDemoPage() {
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
               <p className="text-red-400 font-medium">❌ Error</p>
-              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <p className="text-red-300 text-sm mt-1 whitespace-pre-line">{error}</p>
             </div>
           )}
 
