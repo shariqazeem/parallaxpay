@@ -1,19 +1,31 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useWallet, useConnection } from '@solana/wallet-adapter-react'
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui'
-import { PublicKey, VersionedTransaction } from '@solana/web3.js'
+import dynamic from 'next/dynamic'
+import { VersionedTransaction } from '@solana/web3.js'
 import { createPaymentFetch } from '@/lib/corbits'
 import type { CorbitsWallet } from '@/lib/corbits'
 
+// Import WalletMultiButton dynamically to avoid hydration issues
+const WalletMultiButton = dynamic(
+  async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
+  { ssr: false }
+)
+
 export default function CorbitsDemoPage() {
+  const [mounted, setMounted] = useState(false)
   const { publicKey, signTransaction } = useWallet()
   const { connection } = useConnection()
 
   const [result, setResult] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
+
+  // Prevent hydration errors by only rendering on client
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleTestPayment = async () => {
     if (!publicKey || !signTransaction) {
@@ -44,17 +56,14 @@ export default function CorbitsDemoPage() {
         token: 'USDC',
       })
 
-      // Make a paid API call - payment happens automatically on 402 response
-      const response = await fetchWithPayer('https://helius.api.corbits.dev', {
-        method: 'POST',
+      // Make a paid API call to our protected endpoint
+      // Note: Using local endpoint to avoid CORS issues
+      // In production, you'd use a proper x402-enabled API
+      const response = await fetchWithPayer('/api/corbits-protected', {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'getBlockHeight',
-        }),
       })
 
       const data = await response.json()
@@ -66,6 +75,11 @@ export default function CorbitsDemoPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Prevent hydration errors
+  if (!mounted) {
+    return null
   }
 
   return (
@@ -108,12 +122,15 @@ export default function CorbitsDemoPage() {
           <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
             <p className="text-blue-400 font-medium mb-2">ℹ️ How it works</p>
             <ul className="text-blue-300 text-sm space-y-1">
-              <li>• Connects to Helius RPC API via Corbits</li>
+              <li>• Calls protected API endpoint (/api/corbits-protected)</li>
               <li>• API returns 402 Payment Required</li>
-              <li>• Corbits automatically creates payment transaction</li>
+              <li>• Corbits automatically creates USDC payment transaction</li>
               <li>• You sign the transaction in Phantom</li>
-              <li>• API returns the data after payment verification</li>
+              <li>• API verifies payment and returns protected content</li>
             </ul>
+            <p className="text-blue-400/70 text-xs mt-2">
+              Note: Using local endpoint to avoid CORS issues. In production, you'd use external x402-enabled APIs.
+            </p>
           </div>
 
           {/* Test Button */}
