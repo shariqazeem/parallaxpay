@@ -30,13 +30,11 @@ export async function GET(request: NextRequest) {
           {
             scheme: 'exact',
             network: 'solana-devnet',
-            token: {
-              address: USDC_DEVNET,
-              symbol: 'USDC',
-              decimals: 6,
-            },
+            asset: USDC_DEVNET, // Token mint address as string
             payTo: '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y',
-            amount: '10000', // $0.01 in USDC (6 decimals)
+            maxAmountRequired: '10000', // $0.01 in USDC (6 decimals)
+            maxTimeoutSeconds: 300, // 5 minutes to complete payment
+            mimeType: 'application/json', // Content type we'll return
             resource: request.url,
             description: 'Protected API access - Demo endpoint',
           },
