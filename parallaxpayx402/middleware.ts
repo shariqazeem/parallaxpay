@@ -1,35 +1,60 @@
+// parallaxpayx402/middleware.ts
+
+import { NextRequest, NextResponse } from 'next/server'
+
+/**
+ * TEMPORARY: X402 middleware disabled for debugging
+ * The x402-next package is causing "_bn" errors during payment processing
+ * This might be due to:
+ * 1. Incompatibility with Solana web3.js version
+ * 2. CDP client key issues
+ * 3. Network configuration problems
+ *
+ * For now, we're allowing free access to test the AI inference functionality
+ * Once working, we'll re-enable X402 payments
+ */
+
+export const middleware = (req: NextRequest) => {
+  // Allow all requests to pass through for now
+  console.log('[ParallaxPay Middleware] Request:', req.nextUrl.pathname, '(Payment temporarily disabled)')
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ['/content/:path*'],
+}
+
+/*
+// ORIGINAL X402 CONFIGURATION (commented out for debugging)
 import { Address } from 'viem'
 import { paymentMiddleware, Resource, Network } from 'x402-next'
-import { NextRequest } from 'next/server'
 
-const address = process.env.NEXT_PUBLIC_RECEIVER_ADDRESS as Address
-const network = process.env.NEXT_PUBLIC_NETWORK as Network
-const facilitatorUrl = process.env.NEXT_PUBLIC_FACILITATOR_URL as Resource
-const cdpClientKey = process.env.NEXT_PUBLIC_CDP_CLIENT_KEY as string
+const address = '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y' as Address
+const network = 'solana-devnet' as Network
+const facilitatorUrl = 'https://x402.org/facilitator' as Resource
+const cdpClientKey = '3uyu43EHCwgVIQx6a8cIfSkxp6cXgU30'
 
-// Only enable x402 middleware if CDP key is configured
-const x402PaymentMiddleware = cdpClientKey ? paymentMiddleware(
+const x402PaymentMiddleware = paymentMiddleware(
   address,
   {
-    // ParallaxPay AI Inference Tiers
     '/content/basic': {
       price: '$0.01',
       config: {
-        description: 'Basic AI Inference - Qwen 0.6B, 100 tokens',
+        description: 'Basic AI Inference - Qwen 0.6B (100 tokens)',
       },
       network,
     },
     '/content/standard': {
-      price: '$0.05',
+      price: '$0.10',
       config: {
-        description: 'Standard AI Inference - 256 tokens',
+        description: 'Standard AI Inference - Qwen 7B (500 tokens)',
       },
       network,
     },
     '/content/premium': {
-      price: '$0.25',
+      price: '$0.50',
       config: {
-        description: 'Premium AI Inference - 512 tokens',
+        description: 'Premium AI Inference - Qwen 72B (2000 tokens)',
       },
       network,
     },
@@ -39,30 +64,21 @@ const x402PaymentMiddleware = cdpClientKey ? paymentMiddleware(
   },
   {
     cdpClientKey,
-    appLogo: '/og-image.png',
-    appName: 'ParallaxPay - AI Inference Marketplace',
+    appLogo: '/logo.png',
+    appName: 'ParallaxPay',
     sessionTokenEndpoint: '/api/x402/session-token',
   },
-) : null
+)
 
 export const middleware = (req: NextRequest) => {
-  // If x402 middleware is not configured, allow all requests through
-  if (!x402PaymentMiddleware) {
-    return undefined
+  if (!req.nextUrl.pathname.startsWith('/content/')) {
+    return NextResponse.next()
   }
 
   const delegate = x402PaymentMiddleware as unknown as (
     request: NextRequest,
   ) => ReturnType<typeof x402PaymentMiddleware>
+
   return delegate(req)
 }
-
-// Configure which paths the middleware should run on
-export const config = {
-  matcher: [
-    // Only match the protected content routes
-    '/content/basic',
-    '/content/standard',
-    '/content/premium',
-  ],
-}
+*/

@@ -1,24 +1,31 @@
 import { Request, Response, NextFunction } from 'express';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { verifyPayment } from '../services/payment-verifier';
 
 /**
  * x402 Payment Middleware
  *
  * This middleware implements the x402 protocol (HTTP 402 Payment Required)
- * for Solana blockchain payments.
+ * for Solana blockchain payments with facilitator-based verification.
  *
  * Flow:
  * 1. Check if request has X-Payment header
  * 2. If no payment, return 402 with payment requirements
- * 3. If payment exists, verify it on-chain
- * 4. If valid, allow request to proceed
+ * 3. If payment exists, forward to facilitator for verification
+ * 4. Forward to facilitator for settlement (broadcasts transaction)
+ * 5. If valid, allow request to proceed
+ *
+ * TESTING: Set DISABLE_X402=true in .env to bypass payment checks
  */
 export async function x402Middleware(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
+  // BYPASS for testing - remove in production!
+  if (process.env.DISABLE_X402 === 'true') {
+    console.log('⚠️  X402 DISABLED - Allowing free access for testing');
+    return next();
+  }
+
   const paymentHeader = req.headers['x-payment'] as string;
 
   // If no payment header, return 402 Payment Required
@@ -26,66 +33,81 @@ export async function x402Middleware(
     return res.status(402).json({
       error: 'Payment Required',
       protocol: 'x402',
-      network: process.env.NETWORK || 'devnet',
-      recipient: req.app.locals.providerWallet.publicKey.toBase58(),
-      pricing: {
-        basic: {
-          price: parseFloat(process.env.BASIC_PRICE || '0.01'),
-          max_tokens: 100,
-          description: 'Basic tier inference'
-        },
-        standard: {
-          price: parseFloat(process.env.STANDARD_PRICE || '0.05'),
-          max_tokens: 256,
-          description: 'Standard tier inference'
-        },
-        premium: {
-          price: parseFloat(process.env.PREMIUM_PRICE || '0.25'),
-          max_tokens: 512,
-          description: 'Premium tier inference'
-        }
-      },
-      facilitator: process.env.FACILITATOR_URL,
+      recipient: process.env.PROVIDER_WALLET_ADDRESS || '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y',
+      amount: '10000000', // 0.01 SOL in lamports
+      facilitator: process.env.FACILITATOR_URL || 'http://localhost:3002',
       instructions: [
-        '1. Create a Solana transaction sending USDC to the recipient',
-        '2. Include the payment details in the X-Payment header',
-        '3. Retry your request with the payment header'
+        '1. Create Solana transaction (client → provider)',
+        '2. Sign transaction with your wallet',
+        '3. Sign authorization payload',
+        '4. Send both in X-Payment header',
+        '5. Retry request'
       ]
     });
   }
 
   try {
-    // Parse payment data
-    const paymentData = JSON.parse(paymentHeader);
+    // Parse payment
+    const payment = JSON.parse(paymentHeader);
 
-    console.log('🔍 Verifying payment...', paymentData);
+    console.log('🔍 Verifying payment with facilitator...');
 
-    // Verify payment via facilitator or directly on-chain
-    const connection = req.app.locals.connection as Connection;
-    const providerWallet = req.app.locals.providerWallet;
+    // Forward to facilitator for verification
+    const facilitatorUrl = process.env.FACILITATOR_URL || 'http://localhost:3002';
+    const verifyResponse = await fetch(`${facilitatorUrl}/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentRequest: JSON.stringify(payment) })
+    });
 
-    const isValid = await verifyPayment(
-      connection,
-      paymentData,
-      providerWallet.publicKey
-    );
-
-    if (!isValid) {
+    if (!verifyResponse.ok) {
       return res.status(402).json({
         error: 'Payment verification failed',
-        message: 'Transaction could not be verified on-chain'
+        details: await verifyResponse.text()
       });
     }
 
-    console.log('✅ Payment verified successfully');
+    const verifyData = await verifyResponse.json() as any;
 
-    // Payment is valid, proceed to next middleware/handler
+    if (!verifyData.success || !verifyData.data?.verified) {
+      return res.status(402).json({
+        error: 'Invalid payment'
+      });
+    }
+
+    console.log('💰 Settling payment with facilitator...');
+
+    // Forward to facilitator for settlement
+    const settleResponse = await fetch(`${facilitatorUrl}/settle`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paymentRequest: JSON.stringify(payment) })
+    });
+
+    if (!settleResponse.ok) {
+      return res.status(402).json({
+        error: 'Payment settlement failed'
+      });
+    }
+
+    const settleData = await settleResponse.json() as any;
+
+    if (!settleData.success) {
+      return res.status(402).json({
+        error: 'Transaction broadcast failed'
+      });
+    }
+
+    console.log('✅ Payment settled:', settleData.data?.transactionSignature);
+
+    // Payment verified and settled - allow request
+    (req as any).paymentProof = settleData.data?.transactionSignature;
     next();
 
   } catch (error: any) {
-    console.error('❌ Payment verification error:', error);
-    return res.status(402).json({
-      error: 'Payment verification failed',
+    console.error('❌ x402 middleware error:', error);
+    return res.status(500).json({
+      error: 'Payment processing error',
       message: error.message
     });
   }

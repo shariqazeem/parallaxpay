@@ -56,16 +56,42 @@ class ParallaxService {
 
       const data = response.data;
 
+      console.log('📦 Parallax raw response:', JSON.stringify(data, null, 2));
+
       // Parse OpenAI-compatible response
       if (data.choices && data.choices.length > 0) {
-        const completion = data.choices[0].message?.content || data.choices[0].text || '';
+        const choice = data.choices[0];
+
+        // Parallax uses "messages" (plural) instead of "message" (singular)
+        // Support both formats for compatibility
+        const completion =
+          choice.messages?.content ||      // Parallax format
+          choice.message?.content ||       // OpenAI format
+          choice.text ||                   // Alternative format
+          choice.delta?.content ||         // Streaming format
+          '';
+
+        console.log('✨ Extracted completion:', completion);
+
         return {
           completion,
-          tokens: data.usage?.completion_tokens || request.max_tokens,
+          tokens: data.usage?.completion_tokens || data.usage?.total_tokens || request.max_tokens,
           model: data.model || request.model
         };
       }
 
+      // If no choices, check if response has text directly
+      if (data.text || data.content) {
+        const completion = data.text || data.content;
+        console.log('✨ Extracted completion (direct):', completion);
+        return {
+          completion,
+          tokens: data.tokens || request.max_tokens,
+          model: data.model || request.model
+        };
+      }
+
+      console.error('❌ Invalid Parallax response structure:', data);
       throw new Error('Invalid response from Parallax');
 
     } catch (error: any) {

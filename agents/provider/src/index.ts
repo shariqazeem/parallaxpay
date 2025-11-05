@@ -11,7 +11,7 @@ import { reputationTracker } from './services/reputation';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 4001;
+const PORT = parseInt(process.env.PORT || '4001', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 
 // Middleware
