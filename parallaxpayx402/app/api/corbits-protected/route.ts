@@ -18,10 +18,15 @@ import { Connection } from '@solana/web3.js';
 const USDC_DEVNET = '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU';
 
 export async function GET(request: NextRequest) {
+  console.log('🔍 API Route called')
+  console.log('📋 All headers:', Object.fromEntries(request.headers.entries()))
+
   const xPaymentHeader = request.headers.get('x-payment');
+  console.log('💳 X-Payment header:', xPaymentHeader ? 'present' : 'MISSING')
 
   // No payment provided → Return 402 Payment Required
   if (!xPaymentHeader) {
+    console.log('⚠️ No payment header - returning 402')
     // Return proper x402 format that Corbits expects
     return NextResponse.json(
       {
@@ -51,12 +56,13 @@ export async function GET(request: NextRequest) {
   }
 
   // Payment provided → Verify it
+  console.log('✅ Payment header received! Verifying...')
   try {
     const paymentData = JSON.parse(
       Buffer.from(xPaymentHeader, 'base64').toString('utf-8')
     );
 
-    console.log('Payment received:', paymentData);
+    console.log('💰 Payment data:', JSON.stringify(paymentData, null, 2));
 
     // In production, you would:
     // 1. Verify the transaction signature
