@@ -72,13 +72,13 @@ export async function GET(request: NextRequest) {
     // 5. Store the transaction to prevent replay attacks
 
     // For this demo, we'll do basic validation
-    if (!paymentData.payload?.serializedTransaction) {
+    if (!paymentData.payload?.transaction) {
       throw new Error('Invalid payment data');
     }
 
     // Verify transaction (simplified - in production use Corbits facilitator)
     const connection = new Connection('https://api.devnet.solana.com');
-    const txBuffer = Buffer.from(paymentData.payload.serializedTransaction, 'base64');
+    const txBuffer = Buffer.from(paymentData.payload.transaction, 'base64');
 
     // In production, you'd submit this to the network and verify confirmation
     // For demo purposes, we'll accept it if it's properly formatted
