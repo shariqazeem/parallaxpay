@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Connection } from '@solana/web3.js';
+import { Connection, VersionedTransaction, PublicKey } from '@solana/web3.js';
 
 /**
  * Standard Tier Protected API Route
@@ -57,11 +57,33 @@ export async function POST(request: NextRequest) {
       throw new Error('Invalid payment data');
     }
 
-    // In production: verify transaction on-chain
-    const connection = new Connection('https://api.devnet.solana.com');
+    // Verify and submit transaction on-chain
+    const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
     const txBuffer = Buffer.from(paymentData.payload.transaction, 'base64');
 
-    console.log('✅ Payment verified');
+    console.log('📤 Deserializing and sending transaction to Solana...');
+
+    // Deserialize the transaction
+    const transaction = VersionedTransaction.deserialize(txBuffer);
+
+    // Send the transaction to the network
+    const signature = await connection.sendRawTransaction(transaction.serialize(), {
+      skipPreflight: false,
+      maxRetries: 3,
+    });
+
+    console.log(`⏳ Waiting for confirmation... Signature: ${signature}`);
+
+    // Wait for confirmation
+    const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+
+    if (confirmation.value.err) {
+      console.error('❌ Transaction failed:', confirmation.value.err);
+      throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
+    }
+
+    console.log('✅ Transaction confirmed on-chain!');
+    console.log(`🔗 View on Solscan: https://solscan.io/tx/${signature}?cluster=devnet`);
 
     // Get request body
     const body = await request.json();
