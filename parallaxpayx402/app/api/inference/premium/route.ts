@@ -15,6 +15,10 @@ const PROVIDER_WALLET = '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y';
 export async function POST(request: NextRequest) {
   console.log('🔍 Premium Tier API called');
 
+  // Read body first (can only read once in Next.js)
+  const body = await request.json();
+  const { prompt, model, max_tokens, temperature } = body;
+
   const xPaymentHeader = request.headers.get('x-payment');
 
   // No payment → Return 402 Payment Required
@@ -84,10 +88,6 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Transaction confirmed on-chain!');
     console.log(`🔗 View on Solscan: https://solscan.io/tx/${signature}?cluster=devnet`);
-
-    // Get request body
-    const body = await request.json();
-    const { prompt, model, max_tokens, temperature } = body;
 
     // TODO: Integrate with your AI provider
     // For now, return mock data to demonstrate payment flow

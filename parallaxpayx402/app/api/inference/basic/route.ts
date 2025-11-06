@@ -15,6 +15,10 @@ const PROVIDER_WALLET = '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y';
 export async function POST(request: NextRequest) {
   console.log('🔍 Basic Tier API called');
 
+  // Read body first (can only read once in Next.js)
+  const body = await request.json();
+  const { prompt, model, max_tokens, temperature } = body;
+
   const xPaymentHeader = request.headers.get('x-payment');
 
   // No payment → Return 402 Payment Required
@@ -90,10 +94,6 @@ export async function POST(request: NextRequest) {
     // 2. Recipient is correct
     // 3. Token is USDC
     // 4. Store signature to prevent replay attacks
-
-    // Get request body
-    const body = await request.json();
-    const { prompt, model, max_tokens, temperature } = body;
 
     console.log(`🤖 Calling Parallax provider for: "${prompt.substring(0, 50)}..."`);
 
