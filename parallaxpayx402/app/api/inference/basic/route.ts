@@ -14,12 +14,10 @@ const PROVIDER_WALLET = '9qzmG8vPymc2CAMchZgq26qiUFq4pEfTx6HZfpMhh51y';
 
 export async function POST(request: NextRequest) {
   console.log('🔍 Basic Tier API called');
-
-  // Read body first (can only read once in Next.js)
-  const body = await request.json();
-  const { prompt, model, max_tokens, temperature } = body;
+  console.log('📋 Headers:', Object.fromEntries(request.headers.entries()));
 
   const xPaymentHeader = request.headers.get('x-payment');
+  console.log('💳 X-Payment header:', xPaymentHeader ? 'Present' : 'Missing');
 
   // No payment → Return 402 Payment Required
   if (!xPaymentHeader) {
@@ -50,6 +48,12 @@ export async function POST(request: NextRequest) {
 
   // Payment provided → Verify and process
   console.log('✅ Payment received, verifying...');
+
+  // Read body NOW (after payment check)
+  const body = await request.json();
+  const { prompt, model, max_tokens, temperature } = body;
+  console.log(`📝 Request: prompt="${prompt?.substring(0, 30)}...", model=${model}`);
+
   try {
     const paymentData = JSON.parse(
       Buffer.from(xPaymentHeader, 'base64').toString('utf-8')
