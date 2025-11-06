@@ -17,3 +17,7 @@ export {
   callHeliusAPI,
   type PaymentHandlerOptions,
 } from './payment';
+
+export { useCorbitsPay, type UseCorbitPayOptions } from './hooks/useCorbitsPay';
+
+export { WalletButton, type WalletButtonProps } from './components/WalletButton';
