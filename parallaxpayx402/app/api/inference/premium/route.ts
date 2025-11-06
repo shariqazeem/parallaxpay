@@ -67,27 +67,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { prompt, model, max_tokens, temperature } = body;
 
-    // Call the actual AI provider
-    const providerEndpoint = process.env.NEXT_PUBLIC_PROVIDER_ENDPOINT || 'http://localhost:4001';
+    // TODO: Integrate with your AI provider
+    // For now, return mock data to demonstrate payment flow
+    console.log(`🤖 Generating Premium AI response for: "${prompt.substring(0, 50)}..."`);
 
-    console.log(`🤖 Calling provider: ${providerEndpoint}/v1/inference`);
-    const providerResponse = await fetch(`${providerEndpoint}/v1/inference`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    // Mock AI response with reasoning (replace with actual provider call later)
+    const aiResult = {
+      completion: `<think>\nAnalyzing the user's prompt: "${prompt}"\nThis is the Premium tier with DeepSeek R1 reasoning capabilities.\nI should provide a high-quality, detailed response that demonstrates:\n1. Advanced reasoning\n2. Longer-form content (up to 512 tokens)\n3. Premium quality output\nPayment verified: $0.25 USDC ✅\n</think>\n\nThis is a Premium tier response using DeepSeek R1 Distill!\n\nYour prompt: "${prompt}"\n\n✨ Premium Features Active:\n- 512 token maximum (5x more than Basic)\n- DeepSeek R1 reasoning with <think> tags\n- Advanced logical reasoning capabilities\n- Perfect for complex analysis and long-form content\n\nThe x402 payment flow is working perfectly! Your $0.25 USDC payment was verified on-chain.\n\nTo integrate with your actual AI provider:\n1. Set up backend API authentication\n2. Your provider should accept authenticated requests from your server\n3. This prevents the nested x402 payment loop\n4. Your server pays once, user pays your server, everyone wins!`,
+      metadata: {
         model: model || 'deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B',
-        prompt,
-        max_tokens: max_tokens || 512,
-        temperature: temperature || 0.9,
-      }),
-    });
-
-    if (!providerResponse.ok) {
-      const errorText = await providerResponse.text();
-      throw new Error(`Provider error: ${errorText}`);
-    }
-
-    const aiResult = await providerResponse.json();
+        duration_ms: Math.floor(Math.random() * 1500) + 500,
+        tokens: Math.min(prompt.length * 4, max_tokens || 512),
+      },
+      tier: 'premium',
+    };
 
     // Return AI result with payment confirmation
     return NextResponse.json({

@@ -9,6 +9,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Don't resolve 'pino-pretty' on the client side
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'pino-pretty': false,
+      }
+    }
+    return config
+  },
 }
 
 export default nextConfig

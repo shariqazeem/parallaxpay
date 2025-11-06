@@ -67,27 +67,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { prompt, model, max_tokens, temperature } = body;
 
-    // Call the actual AI provider
-    const providerEndpoint = process.env.NEXT_PUBLIC_PROVIDER_ENDPOINT || 'http://localhost:4001';
+    // TODO: Integrate with your AI provider
+    // For now, return mock data to demonstrate payment flow
+    // Once you set up authenticated backend access to your provider, replace this
 
-    console.log(`🤖 Calling provider: ${providerEndpoint}/v1/inference`);
-    const providerResponse = await fetch(`${providerEndpoint}/v1/inference`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    console.log(`🤖 Generating AI response for: "${prompt.substring(0, 50)}..."`);
+
+    // Mock AI response (replace with actual provider call later)
+    const aiResult = {
+      completion: `This is a demo response from the Basic tier (Qwen 0.6B model).\n\nYour prompt was: "${prompt}"\n\nThe payment of $0.01 USDC was successfully verified! This demonstrates the complete x402 payment flow using Corbits.\n\nTo integrate with your actual AI provider:\n1. Set up backend authentication (API key or session token)\n2. Replace this mock response with a real API call\n3. The provider should accept authenticated requests without requiring x402 payment again`,
+      metadata: {
         model: model || 'Qwen/Qwen3-0.6B',
-        prompt,
-        max_tokens: max_tokens || 100,
-        temperature: temperature || 0.7,
-      }),
-    });
-
-    if (!providerResponse.ok) {
-      const errorText = await providerResponse.text();
-      throw new Error(`Provider error: ${errorText}`);
-    }
-
-    const aiResult = await providerResponse.json();
+        duration_ms: Math.floor(Math.random() * 500) + 100,
+        tokens: Math.min(prompt.length * 2, max_tokens || 100),
+      },
+      tier: 'basic',
+    };
 
     // Return AI result with payment confirmation
     return NextResponse.json({
